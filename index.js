@@ -27,7 +27,6 @@ con.connect(function(err) {
 	if (err) throw err;
 	console.log("Connected!");
 });
-
 function decimalCount (number) {
 	// Convert to String
 	const numberAsString = number.toString();
@@ -54,7 +53,20 @@ client.on('message', message => {
 	const args = message.content.slice(prefix.length).trim().split(/ +/);
 	const command = args.shift().toLowerCase();
 	const ID = message.author.id;
+	delete require.cache[require.resolve('./saladaccounts.json')]
+	const account = require('./saladaccounts.json');
 	let userLevel = 0;
+	if (!account[ID]) {
+		account[ID] = [];
+			account[ID].push({
+				Money: 0,
+				Name: message.author.username,
+				Fruits: []
+			});
+			fs.writeFileSync('./saladaccounts.json', JSON.stringify(account));
+			console.log(message.author.username + ' has been registered as ' + message.author.username);
+			client.channels.cache.get('847429914805927956').send(message.author.username + ' has been registered as ' + message.author.username);
+	} 
 	if (message.member.roles.cache.some(role => role.id = 848576547945447434)){
 		userLevel = 1;
 	}
@@ -63,8 +75,6 @@ client.on('message', message => {
 	}	
 	if (!message.content.startsWith(prefix) && message.channel.id != 847429914805927956 && message.channel.id != 848050973893066802){
 		const wordCount = args.length + 1;
-		delete require.cache[require.resolve('./saladaccounts.json')]
-		const account = require('./saladaccounts.json');
 		if (account[message.author.id]){
 			account[message.author.id][0].Money = +account[message.author.id][0].Money + wordCount * 0.1; 
 			account[message.author.id][0].Money = account[message.author.id][0].Money.toFixed(2);
@@ -72,38 +82,36 @@ client.on('message', message => {
 		}
 	}
     else if (message.channel.id != 847429914805927956){
-        if (message.channel.id == 853212434691915777){
-            if (command === 'translate') {
-                if (args[0]) {
-                    const sql = "SELECT * FROM Posts WHERE postName LIKE '" + args.join(' ') + "' AND NOT postName='ignore' AND postChannel='puffy'";
-                    con.query(sql, function(err, result) {
-                        if (err) throw err;
-                        if (result[0]) {
-                            const embed = new MessageEmbed()
-                                // Set the title of the field
-                                .setTitle(result[0]['postName'])
-                                // Set the color of the embed
-                                .setColor(0xF3C6C1)
-                                .setURL('https://madi-wka.club/word/' + result[0]['slugID'])
-                                // Set the main content of the embed
-                                .setDescription(result[0]['postdesc'].replace(/(<([^>]+)>)/gi, ""))
-                                .addFields({
-                                    name: 'Detailed definition:',
-                                    value: result[0]['postContent'].replace(/(<([^>]+)>)/gi, "")
-                                }, )
-                                .setFooter('Puffys Dictionary', 'https://madi-wka.club/img/puffy.webp');
-                            // Send the embed to the same channel as the message
-                            message.channel.send(embed);
-                        } else {
-                            message.reply("No word found!");
-                        }
-        
-                    });
-                } else {
-                    message.reply("Please provide a valid word!");
-                }
-            }
-        }
+		if (command === 'translate') {
+			if (args[0]) {
+				const sql = "SELECT * FROM Posts WHERE postName LIKE '" + args.join(' ') + "' AND NOT postName='ignore' AND postChannel='puffy'";
+				con.query(sql, function(err, result) {
+					if (err) throw err;
+					if (result[0]) {
+						const embed = new MessageEmbed()
+							// Set the title of the field
+							.setTitle(result[0]['postName'])
+							// Set the color of the embed
+							.setColor(0xF3C6C1)
+							.setURL('https://madi-wka.club/word/' + result[0]['slugID'])
+							// Set the main content of the embed
+							.setDescription(result[0]['postdesc'].replace(/(<([^>]+)>)/gi, ""))
+							.addFields({
+								name: 'Detailed definition:',
+								value: result[0]['postContent'].replace(/(<([^>]+)>)/gi, "")
+							}, )
+							.setFooter('Puffys Dictionary', 'https://madi-wka.club/img/puffy.webp');
+						// Send the embed to the same channel as the message
+						message.channel.send(embed);
+					} else {
+						message.reply("No word found!");
+					}
+	
+				});
+			} else {
+				message.reply("Please provide a valid word!");
+			}
+		}
     }
 	else {
 		console.log(args);
@@ -112,8 +120,6 @@ client.on('message', message => {
 			message.channel.send('Pong.');
 		} else if (command === 'beep') {
 			message.channel.send('Boop.');
-		} else if (command === 'hello') {
-			message.channel.send(`Hello, ${message.author.username}, whats up?`);
 		} else if (command === 'repeat') {
 			if (!args.length) {
 				return message.channel.send('What do I even have to repeat, you idiot!');
@@ -129,16 +135,8 @@ client.on('message', message => {
 					timeout: 1
 				});
 			}
-		} else if (command === 'poke') {
-			if (!message.mentions.users.size) {
-				return message.reply('poking requires a target!');
-			}
-	
-			const taggedUser = message.mentions.users.first();
-			message.channel.send(`Poking <@${taggedUser.id}>`);
 		} else if (command === 'bit') {
-			delete require.cache[require.resolve('./saladaccounts.json')]
-			var account = require('./saladaccounts.json');
+			
 			if (!message.mentions.users.size) {
 				return message.reply('giving bits requires a target!');
 			}
@@ -194,8 +192,7 @@ client.on('message', message => {
 			fs.writeFileSync('./saladaccounts.json', JSON.stringify(account));
 	
 		} else if (command === 'register') {
-			delete require.cache[require.resolve('./saladaccounts.json')]
-			var account = require('./saladaccounts.json');
+			
 			if (account[ID]) {
 				if (args[0]){
 					account[ID][0].Name = args[0];
@@ -211,22 +208,26 @@ client.on('message', message => {
 					account[ID] = [];
 					account[ID].push({
 						Money: 0,
-						Name: args[0]
+						Name: args[0],
+						Fruits: []
 					});
 					fs.writeFileSync('./saladaccounts.json', JSON.stringify(account));
 					message.reply(message.author.username + ' has been registered as ' + args[0]);
+					client.channels.cache.get('847429914805927956').send(message.author.username + ' has been registered as ' + message.author.username);
 				} else {
 					message.reply("Please use '~register [Your Salad Name]'");
 				}
 			}
 			fs.writeFileSync('./saladaccounts.json', JSON.stringify(account));
 		} else if (command === 'info') {
-			delete require.cache[require.resolve('./saladaccounts.json')]
-			var account = require('./saladaccounts.json');
-			if (!message.mentions.users.size) {
-				return message.reply('Checking info requires a target!');
+			
+			var taggedUser = message.author;
+			if (message.mentions.users.size) {
+				taggedUser = message.mentions.users.first();
 			}
-			const taggedUser = message.mentions.users.first();
+				
+			
+			
 			if (account[taggedUser.id]) {
 				var fruitlist = require('./fruits.json');
 				var str = '\n**Name**: ' + account[taggedUser.id][0].Name + '\n**Salad Bits**: ' + account[taggedUser.id][0].Money + "\n**fruit**: ";
@@ -261,8 +262,7 @@ client.on('message', message => {
 		}  else if (command === 'menu'){
 			if (args[0]){
 				if (args[0] == "leaderboard"){
-					delete require.cache[require.resolve('./saladaccounts.json')]
-					var account = require('./saladaccounts.json');
+					
 					var top = {};
 					var sortable = [];
 					for (var key in account) {
@@ -290,9 +290,9 @@ client.on('message', message => {
 					// Send the embed to the same channel as the message
 					message.channel.send(embed);
 				} else if (args[0] == "shop"){
-					delete require.cache[require.resolve('./saladaccounts.json')];
+					
 					delete require.cache[require.resolve('./fruits.json')];
-					var account = require('./saladaccounts.json');
+					
 					var fruits = require('./fruits.json');
 					if (args[1]){
 						if (args[2]){
@@ -363,9 +363,101 @@ client.on('message', message => {
 				// Set the color of the embed
 				.setColor(0x6ED590)
 				// Set the main content of the embed
-				.setDescription("\n **Leaderboard** (~menu leaderboard) \n \n **Shop** (~menu shop)")
+				.setDescription("\n 💸 **Leaderboard** (~menu leaderboard) \n \n 🛒 **Shop** (~menu shop)")
 				// Send the embed to the same channel as the message
-				message.channel.send(embed);
+				message.channel.send(embed).then(function (msg) {
+					msg.react("💸");
+					msg.react("🛒");
+					const filter = (reaction, user) => {
+						return (reaction.emoji.name === '💸' || reaction.emoji.name === '🛒') && user.id === message.author.id;
+					};
+					
+					const collector = msg.createReactionCollector(filter, { time: 15000 });
+					
+					collector.on('collect', (reaction, user) => {
+						if (reaction.emoji.name === '💸'){
+							
+							var top = {};
+							var sortable = [];
+							for (var key in account) {
+								console.log(key);
+								console.log(account[key][0].Money);
+								top[account[key][0].Name] = account[key][0].Money;
+							}
+							for (var vehicle in top) {
+								sortable.push([vehicle, top[vehicle]]);
+							}
+							sortable.sort(function(a, b) {
+								return a[1] - b[1];
+							});
+							let str = "";
+							for(var i = sortable.length-1; i >= 0; i--){
+								str += "\n**" + sortable[i][0] + "**: " + sortable[i][1] + " Salad Bits!\n";
+							}
+							const embed = new MessageEmbed()
+								// Set the title of the field
+								.setTitle("Salad Leaderboards")
+								// Set the color of the embed
+								.setColor(0x6ED590)
+								// Set the main content of the embed
+								.setDescription(str)
+							// Send the embed to the same channel as the message
+							message.channel.send(embed);
+						}else if (reaction.emoji.name === '🛒'){
+							
+					delete require.cache[require.resolve('./fruits.json')];
+					
+					var fruits = require('./fruits.json');
+					var top = {};
+						var untop = {};
+						var sortable = [];
+						var unsortable = [];
+						if (!account[ID][0].Fruits){
+							account[ID][0].Fruits = [];
+						}
+						for (var key in fruits) {
+							console.log(key);
+							console.log(fruits[key][0].Price);
+							if(fruits[key][0].Requirement <= userLevel && !account[ID][0].Fruits.includes(key)){
+								top[":" + fruits[key][0].Emote + ":" + key] = fruits[key][0].Price;
+							}
+						}
+						for (var vehicle in top) {
+							sortable.push([vehicle, top[vehicle]]);
+						}
+						sortable.sort(function(a, b) {
+							return a[1] - b[1];
+						});
+						console.log(sortable);
+						let str = "";
+						for(var i = 0; i < sortable.length; i++){
+							str += "\n**" + sortable[i][0] + "**: " + sortable[i][1] + " Salad Bits!\n";
+						}
+						
+						
+						const embed = new MessageEmbed()
+							// Set the title of the field
+							.setTitle("Salad Shop")
+							// Set the color of the embed
+							.setColor(0x6ED590)
+							// Set the main content of the embed
+							.setDescription(str)
+
+							.setFooter("use '~menu shop buy [Fruit Name]' to get more fruits!")
+						// Send the embed to the same channel as the message
+						message.channel.send(embed);
+						}
+						msg.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
+						collector.stop()
+					});
+					
+					collector.on('end', collected => {
+						console.log(`Collected ${collected.size} items`);
+					});
+				  }).catch(function() {
+					//Something
+				   });;
+				
 			}
 			
 			  
@@ -400,8 +492,8 @@ client.on('message', message => {
 						}
 					}
 				}else if(args[0] == "fruit"){
-					delete require.cache[require.resolve('./saladaccounts.json')]
-					var account = require('./saladaccounts.json');
+					
+					
 					var fruitlist = require('./fruits.json');
 					var taggedUser = message.author;
 					if (!message.mentions.users.size) {
